@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #000000;
+            margin: 0;
+            padding: 0;
+            background-image: url("img/fondo.png");
+            background-repeat: repeat;
+            font-family: "Raleway", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        .container {
+            margin: 0 auto;
+        }
+
+        #mesa {
+            position: relative;
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Contenedor para los cementerios en modo desktop */
+        #cementerios-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        #cementerioB,
+        #cementerioN {
+            pointer-events: auto;
+            background: rgba(15, 18, 22, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+
+            h3 {
+                color: #f7f4ea;
+                margin: 0 0 0.5rem 0;
+                font-size: clamp(0.9rem, 2vw, 1.1rem);
+                text-align: center;
+            }
+        }
+
+        #cementerioB img,
+        #cementerioN img {
+            z-index: 2;
+            width: clamp(150px, 25vw, 400px);
+            height: auto;
+            display: block;
+        }
+
+        /* Desktop: imágenes detrás del tablero, mostrand solo una parte */
+        #cementerioB {
+            position: absolute;
+            left: 0;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateX(-85%);
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        #cementerioN {
+            position: absolute;
+            right: 0;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: translateX(85%);
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        /* Al hacer hover, se desliza completamente */
+        #cementerioB:hover {
+            transform: translateX(0);
+        }
+
+        #cementerioN:hover {
+            transform: translateX(0);
+        }
+
+        #tablero {
+            z-index: 0;
+            display: grid;
+            grid-template-columns: auto auto auto auto auto auto auto auto;
+            justify-content: center;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+
+        #tablero.resetting {
+            opacity: 0.35;
+            transform: scale(0.98);
+        }
+
+        .casilla {
+            border: 2px solid #222222;
+            width: clamp(60px, 10vw, 100px);
+            height: clamp(60px, 10vw, 100px);
+            display: grid;
+            place-items: center;
+        }
+
+        .casilla img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .casilla.selected {
+            background: #fc9700;
+        }
+
+        .panel {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: clamp(0.5rem, 2vw, 1rem);
+            margin-bottom: 1rem;
+            margin-top: 1rem;
+            padding: clamp(0.5rem, 1vw, 1rem);
+            border-radius: 8px;
+            max-width: 992px;
+            margin-left: auto;
+            margin-right: auto;
+            color: #f7f4ea;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+
+        .history-panel {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #f7f4ea;
+            transition: transform 0.18s ease, opacity 0.18s ease;
+        }
+
+        .panel.resetting,
+        .history-panel.resetting {
+            opacity: 0.35;
+            transform: translateY(-4px) scale(0.99);
+        }
+
+        .feedback-flash {
+            animation: feedback-pulse 0.45s ease-out;
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes feedback-pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.8);
+            }
+
+            50% {
+                box-shadow: 0 0 0 18px rgba(255, 255, 255, 0.08);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            }
+        }
+
+        .turno {
+            font-weight: bold;
+            font-size: clamp(0.9rem, 2vw, 3rem);
+        }
+
+        .timers {
+            display: flex;
+            gap: clamp(0.5rem, 1.5vw, 1rem);
+            color: #000000;
+            font-size: clamp(0.9rem, 2vw, 2rem);
+        }
+
+        .timer {
+            padding: 0.5rem clamp(0.25rem, 1vw, 0.5rem);
+            border-radius: 6px;
+            background: #fff;
+            border: 1px solid #ccc;
+        }
+
+        .timer.activo {
+            background: #eff8ff;
+            border-color: #5b9cff;
+        }
+
+        .time-controls {
+            display: grid;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 0 10px 10px 0;
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #f7f4ea;
+            min-width: 200px;
+            position: absolute;
+            top: 30px;
+            left: 0;
+            z-index: 5;
+
+            button {
+                font-size: 0.9rem;
+                border-radius: 6px;
+                padding: 0.5rem 0.75rem;
+                cursor: pointer;
+            }
+        }
+
+        .time-controls .time-control-label {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .time-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .time-presets button,
+        .time-custom button {
+            padding: 0.55rem 0.9rem;
+            border-radius: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #1f2937;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .time-presets button:hover,
+        .time-custom button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        .time-custom {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+
+        .time-custom label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+            color: #f7f4ea;
+        }
+
+        .time-custom input {
+            width: 4.5rem;
+            padding: 0.45rem 0.6rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #fff;
+            color: #111827;
+        }
+
+        .current-control {
+            font-size: 0.95rem;
+            opacity: 0.88;
+        }
+
+        .history-controls {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            flex-direction: column;
+        }
+
+        .history-controls button {
+            border-radius: 0 10px 10px 0;
+            border: none;
+            cursor: pointer;
+            background: #222222;
+            color: #fff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+            img {
+                width: 20px;
+                height: 20px;
+                object-fit: contain;
+            }
+        }
+
+        .history-controls button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .history-panel {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 1rem;
+            color: #f7f4ea;
+        }
+
+        .history-panel h4 {
+            margin: 0 0 0.75rem 0;
+            font-size: clamp(1rem, 1.4vw, 1.2rem);
+        }
+
+        .move-history {
+            display: grid;
+            gap: 0.5rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .move-history div {
+            background: rgba(0, 0, 0, 0.25);
+            padding: 0.6rem 0.85rem;
+            border-radius: 8px;
+            font-size: clamp(0.85rem, 1.2vw, 1rem);
+        }
+
+        .color-Par {
+            background-color: #9e5029;
+        }
+
+        .color-Impar {
+            background-color: #f0be8f;
+        }
+
+        .casilla.movible {
+            background: rgba(176, 239, 130, 0.9);
+        }
+
+        .casilla.rey-jaque {
+            background: rgba(255, 0, 0, 0.35);
+        }
+
+        #cementerioN-content,
+        #cementerioB-content {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            position: absolute;
+            top: 265px;
+        }
+
+        #cementerioN-content {
+            right: 125px;
+        }
+
+        #cementerioB-content {
+            left: 125px;
+        }
+
+        #cementerioN-content img,
+        #cementerioB-content img {
+            width: 100px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        #cementerioN-content .capturada,
+        #cementerioB-content .capturada {
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        /* ========== MEDIA QUERIES RESPONSIVAS ========== */
+
+        /* PANTALLAS 2K Y MÁS (2560px+): Desktop completo */
+        @media (min-width: 2560px) {
+
+            #cementerioB img,
+            #cementerioN img {
+                width: 900px;
+            }
+
+            #cementerioB {
+                left: 0;
+                transform: translateX(-88%);
+            }
+
+            #cementerioN {
+                right: 0;
+                transform: translateX(88%);
+            }
+
+            #tablero {
+                grid-template-columns: auto auto auto auto auto auto auto auto;
+            }
+
+            .casilla {
+                width: 120px;
+                height: 120px;
+            }
+
+            #cementerioN-content,
+            #cementerioB-content {
+                gap: 45px;
+                row-gap: 35px;
+            }
+
+            #cementerioN-content img,
+            #cementerioB-content img {
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+                background: #ffffff1a;
+                border-radius: 8px;
+            }
+        }
+
+        /* PANTALLAS DESKTOP GRANDES (1920px - 2559px) */
+        @media (min-width: 1920px) and (max-width: 2559px) {
+
+            #cementerioB img,
+            #cementerioN img {
+                width: 850px;
+            }
+
+            #cementerioB {
+                left: 0;
+                transform: translateX(-87%);
+            }
+
+            #cementerioN {
+                right: 0;
+                transform: translateX(87%);
+            }
+
+            .casilla {
+                width: clamp(80px, 8vw, 90px);
+                height: clamp(80px, 8vw, 90px);
+            }
+        }
+
+        /* PANTALLAS DESKTOP MEDIAS (1366px - 1919px) */
+        @media (min-width: 1366px) and (max-width: 1919px) {
+
+            #cementerioB img,
+            #cementerioN img {
+                width: clamp(200px, 20vw, 320px);
+            }
+
+            #cementerioB {
+                left: 0;
+                transform: translateX(-86%);
+            }
+
+            #cementerioN {
+                right: 0;
+                transform: translateX(86%);
+            }
+
+            .casilla {
+                width: clamp(70px, 7vw, 100px);
+                height: clamp(70px, 7vw, 100px);
+            }
+        }
+
+        /* TABLETS Y PANTALLAS PEQUEÑAS (769px - 1365px) */
+        @media (min-width: 769px) and (max-width: 1365px) {
+
+            /* Ocultar contenedor de cementerios absoluto */
+            #cementerioB,
+            #cementerioN {
+                display: none;
+            }
+
+            #tablero {
+                grid-template-columns: auto auto auto auto auto auto auto auto;
+            }
+
+            /* Mostrar botón para abrir/cerrar cementerios */
+            #toggle-cementerios {
+                display: block;
+            }
+
+            .casilla {
+                width: clamp(60px, 6vw, 90px);
+                height: clamp(60px, 6vw, 90px);
+            }
+
+            .panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .turno,
+            .timers {
+                width: auto;
+            }
+        }
+
+        /* MÓVILES (480px - 768px) */
+        @media (max-width: 768px) {
+
+            #cementerioB,
+            #cementerioN {
+                display: none;
+            }
+
+            #toggle-cementerios {
+                display: block;
+                margin-bottom: 1rem;
+            }
+
+            #mesa {
+                flex-direction: column;
+            }
+
+            #tablero {
+                grid-template-columns: auto auto auto auto;
+            }
+
+            .casilla {
+                width: clamp(50px, 5vw, 80px);
+                height: clamp(50px, 5vw, 80px);
+                border: 1px solid #222222;
+            }
+
+            .panel {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .turno,
+            .timers {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* MÓVILES PEQUEÑOS (max 479px) */
+        @media (max-width: 479px) {
+            #toggle-cementerios {
+                width: 100%;
+                padding: 0.75rem;
+            }
+
+            #tablero {
+                grid-template-columns: auto auto auto auto;
+            }
+
+            .casilla {
+                width: 40px;
+                height: 40px;
+            }
+
+            .turno {
+                font-size: 0.9rem;
+            }
+
+            .timer {
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Botón toggle */
+        #toggle-cementerios {
+            display: none;
+            width: auto;
+            padding: 0.75rem 1.5rem;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #fc9700 0%, #ff8c00 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #toggle-cementerios:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(252, 151, 0, 0.4);
+        }
+
+        #toggle-cementerios:active {
+            transform: scale(0.95);
+        }
+
+        .multiplayer-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .multiplayer-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .multiplayer-panel button {
+            flex: 1 1 140px;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #4f6ef7 0%, #6bd6ff 100%);
+            color: #fff;
+            cursor: pointer;
+            font-weight: 700;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .multiplayer-panel button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        .multiplayer-code {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            width: 100%;
+            max-width: 320px;
+        }
+
+        .multiplayer-code label {
+            color: #f7f4ea;
+            font-size: 0.95rem;
+        }
+
+        .multiplayer-code input {
+            width: 100%;
+            padding: 0.75rem 0.85rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
+            color: #f7f4ea;
+        }
+
+        #signal-data {
+            width: 100%;
+            height: 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
+            color: #f7f4ea;
+            padding: 0.85rem;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.95rem;
+        }
+
+        .connection-info {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            color: #f7f4ea;
+            font-size: 0.95rem;
+        }
+
+        .modal-player-name {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: #f7f4ea;
+        }
+
+        .modal-player-name label {
+            font-size: 0.95rem;
+        }
+
+        .modal-player-name input {
+            width: 100%;
+            padding: 0.75rem 0.85rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
+            color: #f7f4ea;
+            font-size: 1rem;
+        }
+
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .player-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.06);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+        }
+
+        .player-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .player-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: #4f6ef7;
+            color: white;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .player-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
+        .player-name {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .player-status {
+            font-size: 0.9rem;
+            opacity: 0.84;
+        }
+
+        .player-badge {
+            padding: 0.5rem 0.8rem;
+            border-radius: 999px;
+            background: #ff9d00;
+            color: #111827;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="panel">
+            <div class="turno" id="turno">Turno: Blanco</div>
+            <div class="timers">
+                <div class="timer">Blanco: <span id="timer-blanco">05:00</span></div>
+                <div class="timer">Negro: <span id="timer-negro">05:00</span></div>
+            </div>
+            <div class="time-controls">
+                <div class="time-control-label">Control de tiempo:</div>
+                <!-- <div class="time-presets">
+                    <button type="button" class="time-preset" data-minutes="5" data-increment="0">5+0</button>
+                    <button type="button" class="time-preset" data-minutes="3" data-increment="2">3+2</button>
+                    <button type="button" class="time-preset" data-minutes="1" data-increment="1">1+1</button>
+                </div> -->
+                <div class="time-custom">
+                    <label>
+                        Minutos
+                        <input id="base-time" type="number" min="1" max="60" value="5">
+                    </label>
+                    <label>
+                        Incremento
+                        <input id="increment-time" type="number" min="0" max="30" value="0">
+                    </label>
+                </div>
+                <button id="apply-time-control" type="button">Aplicar y reiniciar</button>
+                <div class="current-control">Control actual: <span id="current-control">5+0</span></div>
+            </div>
+            <button id="toggle-cementerios" type="button">Mostrar cementerios</button>
+            <button id="multiplayer-btn" type="button" class="multiplayer-main-btn">🎮 Jugar Multijugador</button>
+        </div>
+
+        <!-- Info del rival en multijugador -->
+        <div id="rival-info" style="display:none; text-align:center; margin-bottom:0.5rem; padding:0.5rem; background:rgba(102,126,234,0.1); border-radius:8px; color:#667eea; font-weight:600;"></div>
+
+        <div id="mesa">
+            <div id="cementerioB">
+                <h3>⚪ Capturados Blancos</h3>
+                <img src="img/cementerioB.png" alt="Cementerio Blanco">
+
+                <div id="cementerioB-content"></div>
+            </div>
+            <div id="tablero"></div>
+            <div id="cementerioN">
+                <h3>⚫ Capturados Negros</h3>
+                <img src="img/cementerioN.png" alt="Cementerio Negro">
+
+                <div id="cementerioN-content"></div>
+            </div>
+            <div class="history-controls">
+                <button id="undo"> <img src="img/undo.png" alt="Deshacer"></button>
+                </button>
+                <button id="redo"> <img src="img/undo.png" style="rotate: 180deg;" alt="Rehacer"></button>
+                <!-- <button id="export-pgn">Exportar PGN</button> -->
+                <button id="reiniciar"><img src="img/reiniciar.png" alt="Reiniciar partida"></button>
+            </div>
+        </div>
+        <div class="history-panel">
+            <h4>Historial de jugadas</h4>
+            <div id="move-history" class="move-history"></div>
+        </div>
+    </div>
+
+    <!-- Modal de promoción -->
+    <div id="promotion-modal" style="display:none;">
+        <div class="promo-backdrop"></div>
+        <div class="promo-dialog">
+            <h3>Promoción: Elige una pieza</h3>
+            <div class="promo-options">
+                <button data-piece="Reina">Reina</button>
+                <button data-piece="Torre">Torre</button>
+                <button data-piece="Alfil">Alfil</button>
+                <button data-piece="Caballo">Caballo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Multijugador -->
+    <div id="multiplayer-modal" class="modal-overlay">
+        <div class="multiplayer-modal">
+            <div class="modal-header">
+                <h2>Jugar Multijugador</h2>
+                <button class="modal-close" id="close-multiplayer">&times;</button>
+            </div>
+
+            <div class="modal-player-name">
+                <label for="player-name">Tu nombre</label>
+                <input id="player-name" type="text" maxlength="16" placeholder="Escribe tu nombre" value="Jugador">
+            </div>
+
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="join">Buscar Jugadores</button>
+                <button class="tab-btn" data-tab="create">Crear Partida</button>
+            </div>
+
+            <!-- Tab: Buscar jugadores -->
+            <div id="join-tab" class="modal-content active">
+                <div class="players-list">
+                    <h3>Jugadores disponibles</h3>
+                    <div id="players-container" class="players-grid">
+                        <p class="empty-state">Conectando...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Crear partida -->
+            <div id="create-tab" class="modal-content">
+                <div class="create-section">
+                    <h3>Crea una partida y espera jugadores</h3>
+                    <div class="player-code">
+                        <p>Tu código de jugador:</p>
+                        <div class="code-display">
+                            <span id="player-code">...</span>
+                            <button id="copy-code-btn" class="copy-btn">Copiar</button>
+                        </div>
+                    </div>
+                    <button id="create-game" class="action-btn primary">Crear Partida</button>
+                    <p class="help-text">Una vez creada, otros jugadores podrán verte en la lista y unirse.</p>
+                    <div id="waiting-rival-info" style="display:none; text-align:center; margin-top:1rem; padding:0.75rem; background:rgba(102,126,234,0.15); border-radius:6px; color:#667eea; font-size:0.95rem;"></div>
+                </div>
+            </div>
+
+            <div class="modal-status">
+                <span id="multiplayer-status">Estado: Desconectado</span>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        #promotion-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        #promotion-modal .promo-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        #promotion-modal .promo-dialog {
+            position: relative;
+            background: #fff;
+            color: #000;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            min-width: 260px;
+            text-align: center;
+        }
+
+        #promotion-modal .promo-options {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        #promotion-modal .promo-options button {
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background: #f7f7f7;
+            cursor: pointer;
+        }
+
+        #promotion-modal .promo-options button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ========== MODAL MULTIJUGADOR ========== */
+        .multiplayer-main-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .multiplayer-main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .multiplayer-modal {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f7f4ea;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #f7f4ea;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .modal-close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            color: rgba(247, 244, 234, 0.6);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-btn:hover {
+            color: #f7f4ea;
+        }
+
+        .modal-content {
+            display: none;
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-content.active {
+            display: block;
+        }
+
+        .players-list h3,
+        .create-section h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .players-grid {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .player-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .player-card:hover {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+            transform: translateX(4px);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .player-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .player-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .player-status {
+            font-size: 0.8rem;
+            color: rgba(247, 244, 234, 0.6);
+        }
+
+        .player-badge {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: rgba(247, 244, 234, 0.5);
+            padding: 2rem 1rem;
+        }
+
+        .create-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .player-code {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 1.25rem;
+        }
+
+        .player-code p {
+            margin: 0 0 0.75rem 0;
+            font-size: 0.9rem;
+            color: rgba(247, 244, 234, 0.7);
+        }
+
+        .code-display {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px dashed #667eea;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        #player-code {
+            font-family: monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #667eea;
+            flex: 1;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .copy-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+            transform: scale(1.05);
+        }
+
+        .action-btn {
+            padding: 0.85rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: #f7f4ea;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .help-text {
+            font-size: 0.85rem;
+            color: rgba(247, 244, 234, 0.6);
+            margin: 0;
+            text-align: center;
+        }
+
+        .modal-status {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            text-align: center;
+            color: rgba(247, 244, 234, 0.7);
+        }
+
+        @media (max-width: 768px) {
+            .multiplayer-modal {
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            .modal-header h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="chess.js"></script>
+
+</html>
