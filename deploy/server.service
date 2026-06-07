@@ -1,0 +1,20 @@
+[Unit]
+Description=Ajedrez Node Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/ajedrez
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+Environment=NODE_ENV=production
+Environment=PORT=3000
+# Set ALLOWED_ORIGINS to your domain(s), comma separated
+# Environment=ALLOWED_ORIGINS=https://tu-dominio.example.com
+# Example TURN variables (set in production):
+# Environment=TURN_SECRET=your_long_turn_secret
+# Environment=TURN_URL=turn:your-domain.example.com:3478
+
+[Install]
+WantedBy=multi-user.target
