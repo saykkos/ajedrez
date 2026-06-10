@@ -20,7 +20,7 @@ npm start
 Luego abre en el navegador:
 
 ```text
-http://localhost:3000/chess.html
+http://localhost:8080/chess.html
 ```
 
 ## Uso

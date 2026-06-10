@@ -49,6 +49,16 @@ var waitingForOpponent = false;
 var socket = null;
 var currentRoom = null;
 
+function updateBoardOrientation() {
+    const tableroDiv = document.getElementById('tablero');
+    if (!tableroDiv) return;
+    if (localPlayerColor === 'B') {
+        tableroDiv.classList.add('flipped');
+    } else {
+        tableroDiv.classList.remove('flipped');
+    }
+}
+
 // Configuración para uso remoto (puedes definirlas desde la página antes de cargar el script)
 // Ejemplo en el HTML: window.SIGNALING_SERVER_URL = 'https://mi-dominio.example';
 // window.ICE_SERVERS = [ { urls: 'stun:stun.l.google.com:19302' }, { urls: 'turn:mi-turn.example.com:3478', username: 'user', credential: 'pass' } ];
@@ -242,6 +252,7 @@ function pauseTimer() {
 function setNetworkConnected(connected, host = false) {
     networkConnected = connected;
     networkHost = host;
+    updateBoardOrientation();
 
     if (connected) {
         waitingForOpponent = false;
@@ -1275,6 +1286,7 @@ function reiniciarPartida() {
         inicializarControlUI();
         actualizarControlVisual();
         initTablero();
+        updateBoardOrientation();
 
         if (tableroDiv) {
             requestAnimationFrame(() => {

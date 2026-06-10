@@ -53,6 +53,30 @@ sudo apt install -y coturn
 sudo cp deploy/coturn.conf /etc/turnserver.conf
 # Editar /etc/turnserver.conf con tus credenciales y dominio
 sudo systemctl enable --now coturn
+## Desplegar coturn en Fly.io (recomendado)
+Si usas Fly.io puedes desplegar coturn como una app separada (UDP+TCP) usando el Dockerfile incluido en `deploy/coturn`.
+
+Pasos (Fly CLI `flyctl` requerido):
+
+```bash
+# 1) Crear app en Fly
+flyctl apps create coturn-ajedrez
+
+# 2) Subir secrets (genera STATIC_AUTH_SECRET en VPS o localmente)
+openssl rand -hex 32
+flyctl secrets set STATIC_AUTH_SECRET=<SECRET> REALM=your-domain.example.com
+
+# 3) Desplegar
+cd deploy/coturn
+flyctl deploy
+
+# 4) Copia la URL/host y configura en la app principal:
+#    TURN_URL=turn:coturn-ajedrez.fly.dev:3478
+flyctl secrets set TURN_SECRET=<SECRET> --app ajedrez
+flyctl secrets set TURN_URL=turn:coturn-ajedrez.fly.dev:3478 --app ajedrez
+```
+
+Alternativa: instalar `coturn` en una VM (Ubuntu) y configurar `/etc/turnserver.conf` como se explica abajo.
 
 # Firewall básico
 sudo ufw allow OpenSSH

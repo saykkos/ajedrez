@@ -1,0 +1,29 @@
+[app]
+# Replace the app name before deploying, e.g. 'coturn-ajedrez'
+app = "coturn-ajedrez"
+
+[build]
+  image = ""
+
+[env]
+# You should set REALM and STATIC_AUTH_SECRET as secrets via flyctl after creating the app
+# Example: flyctl secrets set STATIC_AUTH_SECRET=... REALM=your-domain.example.com
+
+[experimental]
+  allowed_public_ports = []
+
+[services]
+  [[services]]
+  internal_port = 3478
+  protocol = "udp"
+  ports = [ { handlers = ["udp"], port = 3478 } ]
+
+  [[services]]
+  internal_port = 3478
+  protocol = "tcp"
+  ports = [ { handlers = ["tcp"], port = 3478 } ]
+
+  [[services]]
+  internal_port = 5349
+  protocol = "tcp"
+  ports = [ { handlers = ["tls"], port = 5349 } ]

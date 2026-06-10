@@ -106,6 +106,14 @@
             transition: transform 0.18s ease, opacity 0.18s ease;
         }
 
+        #tablero.flipped {
+            transform: rotate(180deg);
+        }
+
+        #tablero.flipped .casilla > * {
+            transform: rotate(180deg);
+        }
+
         #tablero.resetting {
             opacity: 0.35;
             transform: scale(0.98);
@@ -139,7 +147,7 @@
             margin-top: 1rem;
             padding: clamp(0.5rem, 1vw, 1rem);
             border-radius: 8px;
-            max-width: 992px;
+            max-width: 1050px;
             margin-left: auto;
             margin-right: auto;
             color: #f7f4ea;
@@ -198,6 +206,7 @@
             border-radius: 6px;
             background: #fff;
             border: 1px solid #ccc;
+            min-width: 197px;
         }
 
         .timer.activo {
@@ -684,6 +693,7 @@
             gap: 0.5rem;
             margin-bottom: 1rem;
             color: #f7f4ea;
+            padding: 15px;
         }
 
         .modal-player-name label {
@@ -691,7 +701,6 @@
         }
 
         .modal-player-name input {
-            width: 100%;
             padding: 0.75rem 0.85rem;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.18);
